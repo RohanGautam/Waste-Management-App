@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:scoped_model/scoped_model.dart';
+import 'package:waste_management/ControlPage.dart';
 
 import './DiscoveryPage.dart';
 import './SelectBondedDevicePage.dart';
@@ -133,6 +134,16 @@ class _MainPage extends State<MainPage> {
                 },
               ),
             ),
+            ListTile(
+              title: RaisedButton(
+                child: Text('Control page'),
+                onPressed: (){
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) {return ControlPage();})
+                  );
+                },
+              ),
+            )
           ],
         ),
       ),
