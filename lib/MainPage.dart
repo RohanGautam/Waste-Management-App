@@ -151,7 +151,7 @@ class _MainPage extends State<MainPage> {
   }
 
   void _startChat(BuildContext context, BluetoothDevice server) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) { return ChatPage(server: server); }));
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) { return ControlPage(server: server); })); // change to chat page for testing terminal commands
   }
 
   Future<void> _startBackgroundTask(BuildContext context, BluetoothDevice server) async {

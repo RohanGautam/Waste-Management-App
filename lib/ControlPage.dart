@@ -1,10 +1,25 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'OneTimeLocation.dart';
 
 class ControlPage extends StatefulWidget {
+  final BluetoothDevice server;
+
+  const ControlPage({this.server});
+
   @override
   _ControlPageState createState() => _ControlPageState();
+}
+
+class _Message {
+  int whom;
+  String text;
+
+  _Message(this.whom, this.text);
 }
 
 class _ControlPageState extends State<ControlPage> {
@@ -31,6 +46,15 @@ class _ControlPageState extends State<ControlPage> {
   bool _myLocationButtonEnabled = true;
   GoogleMapController _controller;
   Map<MarkerId, Marker> markers = <MarkerId, Marker>{};
+  //for bluetooth communication
+  static final clientID = 0;
+  static final maxMessageLength = 4096 - 3;
+  BluetoothConnection connection;
+  bool isConnecting = true;
+  bool get isConnected => connection != null && connection.isConnected;
+  bool isDisconnecting = false;
+  List<_Message> messages = List<_Message>();
+  String _messageBuffer = '';
 
   void onMapCreated(GoogleMapController controller) {
     setState(() {
@@ -44,11 +68,45 @@ class _ControlPageState extends State<ControlPage> {
       _position = position;
     });
   }
-  // end of fns, vars for google maps
+
   @override
   void initState() {
     super.initState();
+    BluetoothConnection.toAddress(widget.server.address).then((_connection) {
+      print('Connected to the device');
+      connection = _connection;
+      setState(() {
+        isConnecting = false;
+        isDisconnecting = false;
+      });
+
+      connection.input.listen(_onDataReceived).onDone(() {
+        if (isDisconnecting) {
+          print('Disconnecting locally!');
+        } else {
+          print('Disconnected remotely!');
+        }
+        if (this.mounted) {
+          setState(() {});
+        }
+      });
+    }).catchError((error) {
+      print('Cannot connect, exception occured');
+      print(error);
+    });
     getcurrentLoc();
+  }
+
+  @override
+  void dispose() {
+    // Avoid memory leak (`setState` after dispose) and disconnect
+    if (isConnected) {
+      isDisconnecting = true;
+      connection.dispose();
+      connection = null;
+    }
+
+    super.dispose();
   }
 
   void getcurrentLoc() async {
@@ -68,7 +126,8 @@ class _ControlPageState extends State<ControlPage> {
     ));
     //place marker
     setState(() {
-      markers[MarkerId('0')] = Marker(markerId:MarkerId('0'), position: LatLng(latLong[0], latLong[1]));
+      markers[MarkerId('0')] = Marker(
+          markerId: MarkerId('0'), position: LatLng(latLong[0], latLong[1]));
     });
 
     print("recieved coordinates: ${latLong[0]}, ${latLong[1]}");
@@ -105,8 +164,27 @@ class _ControlPageState extends State<ControlPage> {
     }
   }
 
-  Widget toggleLight(){
-    
+  var toggle = 1;
+  Widget toggleLight() {
+    // assign the actual function if it is connected
+    var function = isConnecting
+        ? null
+        : isConnected
+            ? () {
+                if (toggle == 1) {
+                  _sendMessage("1");
+                  toggle = 0;
+                } else {
+                  _sendMessage("0");
+                  toggle = 1;
+                }
+              }
+            : null;
+
+    return RaisedButton(
+      child: Text("Toggle light"),
+      onPressed: function,
+    );
   }
 
   @override
@@ -142,9 +220,81 @@ class _ControlPageState extends State<ControlPage> {
               height: 200.0,
               child: googleMap,
             ),
+            toggleLight()
           ],
         ),
       ),
     );
+  }
+
+  void _onDataReceived(Uint8List data) {
+    // Allocate buffer for parsed data
+    int backspacesCounter = 0;
+    data.forEach((byte) {
+      if (byte == 8 || byte == 127) {
+        backspacesCounter++;
+      }
+    });
+    Uint8List buffer = Uint8List(data.length - backspacesCounter);
+    int bufferIndex = buffer.length;
+
+    // Apply backspace control character
+    backspacesCounter = 0;
+    for (int i = data.length - 1; i >= 0; i--) {
+      if (data[i] == 8 || data[i] == 127) {
+        backspacesCounter++;
+      } else {
+        if (backspacesCounter > 0) {
+          backspacesCounter--;
+        } else {
+          buffer[--bufferIndex] = data[i];
+        }
+      }
+    }
+
+    // Create message if there is new line character
+    String dataString = String.fromCharCodes(buffer);
+    int index = buffer.indexOf(13);
+    if (~index != 0) {
+      // \r\n
+      setState(() {
+        messages.add(_Message(
+            1,
+            backspacesCounter > 0
+                ? _messageBuffer.substring(
+                    0, _messageBuffer.length - backspacesCounter)
+                : _messageBuffer + dataString.substring(0, index)));
+        _messageBuffer = dataString.substring(index);
+      });
+    } else {
+      _messageBuffer = (backspacesCounter > 0
+          ? _messageBuffer.substring(
+              0, _messageBuffer.length - backspacesCounter)
+          : _messageBuffer + dataString);
+    }
+  }
+
+  void _sendMessage(String text) async {
+    text = text.trim();
+    // textEditingController.clear();
+
+    if (text.length > 0) {
+      try {
+        connection.output.add(utf8.encode(text + "\r\n"));
+        await connection.output.allSent;
+
+        setState(() {
+          messages.add(_Message(clientID, text));
+          print("Sending $text, clientId is $clientID");
+        });
+
+        // Future.delayed(Duration(milliseconds: 333)).then((_) {
+        //   listScrollController.animateTo(listScrollController.position.maxScrollExtent, duration: Duration(milliseconds: 333), curve: Curves.easeOut);
+        // });
+      } catch (e) {
+        // Ignore error, but notify state
+        setState(() {});
+      }
+    }
   }
 }
