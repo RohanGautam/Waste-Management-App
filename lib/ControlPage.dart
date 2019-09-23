@@ -209,6 +209,7 @@ class _ControlPageState extends State<ControlPage> {
     );
 
     return Scaffold(
+      appBar: AppBar(title: Text("Control Page"),),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
