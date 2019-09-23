@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'OneTimeLocation.dart';
 
 class ChatPage extends StatefulWidget {
   final BluetoothDevice server;
@@ -70,6 +71,13 @@ class _ChatPage extends State<ChatPage> {
       print('Cannot connect, exception occured');
       print(error);
     });
+    getcurrentLoc();
+  }
+
+  void getcurrentLoc() async{
+    var otl = OneTimeLocation();
+    var latLong = await otl.getCurrentLocation();
+    print("${latLong[0]}, ${latLong[1]}");
   }
 
   @override
@@ -218,6 +226,7 @@ class _ChatPage extends State<ChatPage> {
 
         setState(() {
           messages.add(_Message(clientID, text));
+          print("Sending $text, clientId is $clientID");
         });
 
         Future.delayed(Duration(milliseconds: 333)).then((_) {
