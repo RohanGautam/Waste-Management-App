@@ -149,7 +149,7 @@ class _MainPage extends State<MainPage> {
   }
 
   void _startChat(BuildContext context, BluetoothDevice server) {
-    Navigator.of(context).push(MaterialPageRoute(builder: (context) { return ControlPage(server: server); })); // change to chat page for testing terminal commands
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) { return ControlPage(server: server, deviceAddress: _address,); })); // change to chat page for testing terminal commands
   }
 
   

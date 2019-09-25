@@ -8,8 +8,9 @@ import 'OneTimeLocation.dart';
 
 class ControlPage extends StatefulWidget {
   final BluetoothDevice server;
+  final String deviceAddress;
 
-  const ControlPage({this.server});
+  const ControlPage({this.server, this.deviceAddress});
 
   @override
   _ControlPageState createState() => _ControlPageState();
@@ -72,6 +73,7 @@ class _ControlPageState extends State<ControlPage> {
   @override
   void initState() {
     super.initState();
+    //set up the bluetooth connection
     BluetoothConnection.toAddress(widget.server.address).then((_connection) {
       print('Connected to the device');
       connection = _connection;
@@ -94,6 +96,8 @@ class _ControlPageState extends State<ControlPage> {
       print('Cannot connect, exception occured');
       print(error);
     });
+    //Passing the device address to arduino for verification
+    // _sendMessage(widget.deviceAddress); // problem: at this stage, bluetooth is not connected. wait for isconnected maybe?
     getcurrentLoc();
   }
 
@@ -133,22 +137,26 @@ class _ControlPageState extends State<ControlPage> {
     print("recieved coordinates: ${latLong[0]}, ${latLong[1]}");
   }
 
-  Widget identityWidget(String name) {
+  Widget identityWidget(String name,
+      {Color backColor = Colors.green, Color textColor = Colors.white}) {
     return RaisedButton(
-      child: Text(name),
+      child: Text(
+        name,
+        style: TextStyle(fontSize: 12),
+      ),
       onPressed: null,
       shape: RoundedRectangleBorder(
         borderRadius: new BorderRadius.circular(30.0),
       ),
-      disabledColor: Colors.green,
-      disabledTextColor: Colors.white,
+      disabledColor: backColor,
+      disabledTextColor: textColor,
     );
     // return Text("hi");
   }
 
   Widget latLongWidget() {
     if (latLong == null) {
-      return Column(
+      return Row(
         children: <Widget>[
           Text("Waiting for location:"),
           IconButton(
@@ -187,6 +195,63 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  Widget subActionBoard(String person1, person2, actionTitle, var onPress) {
+    double width = MediaQuery.of(context).size.width;
+    return Card(
+      child: Container(
+        padding: EdgeInsets.all(5.0),
+        width: width / 2 - 10, // 10px less than device width
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            identityWidget(person1),
+            identityWidget(person2),
+            RaisedButton(
+              padding: EdgeInsets.all(10),
+              child: Text(
+                actionTitle,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 3,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: new BorderRadius.circular(10.0),
+              ),
+              onPressed: onPress,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget actionBoard() {
+    // return subActionBoard("Hospital manager", "Transport guy",
+    //               "Lock, set destination Geofence", null);
+    //TODO: write onpress functions for all of these
+    return Container(
+      child: Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              subActionBoard("Hospital manager", "Transport guy",
+                  "Lock, set destination Geofence", null),
+              subActionBoard("Transport guy", "Facility manager",
+                  "Unlock, empty waste", null),
+            ],
+          ),
+          Row(
+            children: <Widget>[
+              subActionBoard("Transport guy", "Facility manager",
+                  "Lock, set destination Geofence", null),
+              subActionBoard("Hospital Manager", "Transport guy",
+                  "Unlock it, return to hospital", null),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final GoogleMap googleMap = GoogleMap(
@@ -209,19 +274,22 @@ class _ControlPageState extends State<ControlPage> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text("Control Page"),),
+      appBar: AppBar(
+        title: Text("Control Page"),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            identityWidget("Facility Manager"),
+            // identityWidget("Facility Manager"),
             latLongWidget(),
             SizedBox(
               width: 300.0,
               height: 200.0,
               child: googleMap,
             ),
-            toggleLight()
+            // toggleLight()
+            actionBoard(),
           ],
         ),
       ),
