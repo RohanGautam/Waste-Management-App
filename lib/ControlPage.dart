@@ -225,26 +225,64 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Widget actionBoard() {
-    // return subActionBoard("Hospital manager", "Transport guy",
-    //               "Lock, set destination Geofence", null);
-    //TODO: write onpress functions for all of these
+    int facilityID =1, transporterID =2, hospitalID=3;
+    var sampleGeofence = [10.3333333, 103.6814762, 20.6814762, 3.6814762];
+
+    var hospitalLock = isConnecting
+        ? null
+        : isConnected
+            ? () {
+                //hospital locks and sets geofence
+                _sendMessage("HLOCK#${hospitalID}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${facilityID}");
+                // TODO get volume and weight from arduino, upload to firebase
+              }
+            : null;
+    var hospitalUnlock = isConnecting
+        ? null
+        : isConnected
+            ? () {
+                //hospital unlocks and verifies it's position
+                _sendMessage("HUNLOCK#${hospitalID}_${latLong[0]}_${latLong[1]}");
+                //nothing happens here, as bin is empty when it comes back to hospital
+              }
+            : null;
+    var facilityLock = isConnecting
+        ? null
+        : isConnected
+            ? () {
+                //hospital locks and sets geofence
+                _sendMessage("FLOCK#${facilityID}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${hospitalID}");
+                //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
+                // TODO : should we check for midway stops or just do nothing here?
+              }
+            : null;
+    var facilityUnlock = isConnecting
+        ? null
+        : isConnected
+            ? () {
+                //facility unlocks and verifies it's position
+                _sendMessage("FUNLOCK#${facilityID}_${latLong[0]}_${latLong[1]}");
+                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+              }
+            : null;
+
     return Container(
       child: Column(
         children: <Widget>[
           Row(
             children: <Widget>[
               subActionBoard("Hospital manager", "Transport guy",
-                  "Lock, set destination Geofence", null),
+                  "Lock, set destination Geofence", hospitalLock),
               subActionBoard("Transport guy", "Facility manager",
-                  "Unlock, empty waste", null),
+                  "Unlock, empty waste", facilityUnlock),
             ],
           ),
           Row(
             children: <Widget>[
               subActionBoard("Transport guy", "Facility manager",
-                  "Lock, set destination Geofence", null),
+                  "Lock, set destination Geofence", facilityLock),
               subActionBoard("Hospital Manager", "Transport guy",
-                  "Unlock it, return to hospital", null),
+                  "Unlock it, return to hospital", hospitalUnlock),
             ],
           ),
         ],
