@@ -225,16 +225,28 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Widget actionBoard() {
-    int facilityID =1, transporterID =2, hospitalID=3;
-    var sampleGeofence = [10.3333333, 103.6814762, 20.6814762, 3.6814762];
+    int facilityID = 1,
+        transporterID = 2,
+        hospitalID = 3; //TODO: id just identifies phone
+    int nextTransporterId = 5; //TODO: get this from firebase
+    var sampleGeofence = [
+      10.3333333,
+      103.6814762,
+      20.6814762,
+      3.6814762
+    ]; //TODO: get this from firebase
 
     var hospitalLock = isConnecting
         ? null
         : isConnected
-            ? () {
+            ? () async {
                 //hospital locks and sets geofence
-                _sendMessage("HLOCK#${hospitalID}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${facilityID}");
+                // _sendMessage("FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${facilityID}");
                 // TODO get volume and weight from arduino, upload to firebase
+                await _sendMessage("distance");
+                var L = await _mostRecentArduinoMessages();
+                L.forEach((element) => print(element.text));
+                print("in here");
               }
             : null;
     var hospitalUnlock = isConnecting
@@ -242,7 +254,7 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () {
                 //hospital unlocks and verifies it's position
-                _sendMessage("HUNLOCK#${hospitalID}_${latLong[0]}_${latLong[1]}");
+                _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //nothing happens here, as bin is empty when it comes back to hospital
               }
             : null;
@@ -251,7 +263,8 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () {
                 //hospital locks and sets geofence
-                _sendMessage("FLOCK#${facilityID}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${hospitalID}");
+                _sendMessage(
+                    "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${sampleGeofence[3]}_${hospitalID}");
                 //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
                 // TODO : should we check for midway stops or just do nothing here?
               }
@@ -261,7 +274,7 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () {
                 //facility unlocks and verifies it's position
-                _sendMessage("FUNLOCK#${facilityID}_${latLong[0]}_${latLong[1]}");
+                _sendMessage("TLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
               }
             : null;
@@ -332,6 +345,26 @@ class _ControlPageState extends State<ControlPage> {
         ),
       ),
     );
+  }
+
+  _mostRecentArduinoMessages() async {
+    var _recentMessages=() {
+      List<_Message> newArduinoMessages = [];
+      for (int i = messages.length - 1; i >= 0; i--) {
+        var item = messages[i];
+        if (item.whom != 1) {
+          break;
+        }
+        item.text = item.text.trim();
+        newArduinoMessages.insert(0, item);
+      }
+      return newArduinoMessages;
+    };
+    var L;
+    await Future.delayed(const Duration(milliseconds: 2000), () { //TODO: tweak the delay if input takes too much time
+      L=_recentMessages();
+    });
+    return(L);
   }
 
   void _onDataReceived(Uint8List data) {
