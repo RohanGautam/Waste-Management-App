@@ -589,9 +589,11 @@ class _ControlPageState extends State<ControlPage> {
                 });
                 if(widget.persona == 'hospital'){
                   hospitalUnlockSend();
+                  print("SENT TO FIREBASE");
                 }
                 else{
                   facilityUnlockSend();
+                  print("SENT TO FIREBASE");
                 }
                 
                 // L.forEach((element) => print(element.text));
@@ -615,9 +617,11 @@ class _ControlPageState extends State<ControlPage> {
 
                 if(widget.persona == 'hospital'){
                   hospitalLockSend(weight:parsedData['weight'], volume: parsedData['volume'], gf_x: parsedData['loc_x'], gf_y: parsedData['loc_y'], gf_rad: parsedData['radius']);
+                  print("SENT TO FIREBASE");
                 }
                 else{
                   facilityLockSend();
+                  print("SENT TO FIREBASE");
                 }
                 // L.forEach((element) => print(element.text));
                 print("in here");
@@ -719,7 +723,7 @@ class _ControlPageState extends State<ControlPage> {
       return newArduinoMessages;
     };
     var L;
-    await Future.delayed(const Duration(milliseconds: 2000), () {
+    await Future.delayed(const Duration(milliseconds: 4000), () {
       //TODO: tweak the delay if input takes too much time
       L = _recentMessages();
     });
