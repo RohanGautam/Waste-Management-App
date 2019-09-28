@@ -76,7 +76,7 @@ class _Message {
 }
 
 class _ControlPageState extends State<ControlPage> {
-  static var latLong;
+  static var latLong =[-33.852, 151.211];
   //maps
   static final CameraPosition _kInitialPosition = const CameraPosition(
     target: LatLng(-33.852, 151.211),
@@ -126,7 +126,7 @@ class _ControlPageState extends State<ControlPage> {
   void initState() {
     super.initState();
     //set up the bluetooth connection
-    BluetoothConnection.toAddress(widget.server.address).then((_connection) {
+    BluetoothConnection.toAddress(widget.bserver.address).then((_connection) {
       print('Connected to the device');
       connection = _connection;
       setState(() {
