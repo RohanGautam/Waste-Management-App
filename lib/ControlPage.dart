@@ -6,6 +6,73 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'AfterLockReport.dart';
 import 'OneTimeLocation.dart';
+import "package:firebase_database/firebase_database.dart";
+
+final databaseReference = FirebaseDatabase.instance.reference();
+void hospitalLockSend({weight='223.89', volume = '25000.00', tId='123432', sId='12321', dID = '97820', gf_x ='12.98', gf_y = '89.01', gf_rad = '5.00'}) async {
+  print("HOSPITAL LOCKING");
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+    'weight': '$weight',//Arduino
+    'volume': '$volume',//Arduino
+    'transporter_id': '$tId',//OwnerID from Arduino
+    'source_id': '$sId',//App auth
+    'destination_id': '$dID',//Entered in App
+    'geo_fence_loc': {'x': '$gf_x', 'y': '$gf_y'},//From App
+    'geo_fence_radius': '$gf_rad'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+  "BINID_66716" : null
+  });
+}
+
+void hospitalUnlockSend() {
+  print("HOSPITAL UNLOCKING");
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+    'weight': 'null',//Arduino
+    'volume': 'null',//Arduino
+    'transporter_id': 'null',
+    'source_id': 'null',//Arduino
+    'destination_id': 'null',//Arduino
+    'geo_fence_loc': 'null',//Arduino
+    'geo_fence_radius': 'null'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+    "BINID_66716" : null
+  });
+}
+
+void facilityLockSend({tId='123432'}) {
+  print("FACILITY LOCKING");
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+    'weight': 'null',//Arduino
+    'volume': 'null',//Arduino
+    'transporter_id': '$tId',//Arduino
+    'source_id': 'null',//Arduino
+    'destination_id': 'null',//Arduino
+    'geo_fence_loc': 'null',//Arduino
+    'geo_fence_radius': 'null'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+    "BINID_66716" : null
+  });
+}
+
+void facilityUnlockSend({weight='223.89', volume = '25000.00', tId='123432', sId='12321', dID = '97820', gf_x ='12.98', gf_y = '89.01', gf_rad = '5.00'}) {
+  print("FACILITY UNLOCKING");
+  databaseReference.child('BIN_STATUS').child("EMPTY").child("BINID_66716").update({
+    'weight': '$weight',//Arduino
+    'volume': '$volume',//Arduino
+    'transporter_id': '$tId',//OwnerID from Arduino
+    'source_id': '$sId',//App auth
+    'destination_id': '$dID',//Entered in App
+    'geo_fence_loc': {'x': '$gf_x', 'y': '$gf_y'},//From App
+    'geo_fence_radius': '$gf_rad'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("ON_JOB").update({
+    "BINID_66716" : null
+  });
+}
+
 
 class ControlPage extends StatefulWidget {
   final BluetoothDevice server;
@@ -278,6 +345,7 @@ class _ControlPageState extends State<ControlPage> {
   }
 
   Widget actionBoard() {
+    // currently not in use
     int facilityID = 0,
         transporterID = 0,
         hospitalID = 0; //TODO: id just identifies phone
@@ -441,6 +509,9 @@ class _ControlPageState extends State<ControlPage> {
 
   var hospitalLockedParsedData;
   void onReportPressed(){
+    setState(() {
+     recievedHospitalLock= false; 
+    });
     var temp = hospitalLockedParsedData;
     Navigator.of(context).push(MaterialPageRoute(builder: (context) { return AfterLockReport(weight: temp['weight'], volume: temp['volume'], destination: _dropdownvalue,src: "Hospital #232", latlng: LatLng(double.parse(temp['loc_x']), double.parse(temp['loc_y']))); })); // change to chat page for testing terminal commands
   }
@@ -512,6 +583,17 @@ class _ControlPageState extends State<ControlPage> {
                 var L = await _mostRecentArduinoMessages();
                 var parsedData = parseDataRecieved(L[0].text);
                 print(parsedData);
+                setState(() {
+                 recievedHospitalLock= true; 
+                 hospitalLockedParsedData = parsedData;
+                });
+                if(widget.persona == 'hospital'){
+                  hospitalUnlockSend();
+                }
+                else{
+                  facilityUnlockSend();
+                }
+                
                 // L.forEach((element) => print(element.text));
                 print("in here");
               }
@@ -530,6 +612,13 @@ class _ControlPageState extends State<ControlPage> {
                  recievedHospitalLock= true; 
                  hospitalLockedParsedData = parsedData;
                 });
+
+                if(widget.persona == 'hospital'){
+                  hospitalLockSend(weight:parsedData['weight'], volume: parsedData['volume'], gf_x: parsedData['loc_x'], gf_y: parsedData['loc_y'], gf_rad: parsedData['radius']);
+                }
+                else{
+                  facilityLockSend();
+                }
                 // L.forEach((element) => print(element.text));
                 print("in here");
               }
