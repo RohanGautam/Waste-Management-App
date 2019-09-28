@@ -24,7 +24,7 @@ class _Message {
 }
 
 class _ControlPageState extends State<ControlPage> {
-  static var latLong;
+  static var latLong = [-33.852, 151.211];
   //maps
   static final CameraPosition _kInitialPosition = const CameraPosition(
     target: LatLng(-33.852, 151.211),
@@ -168,6 +168,7 @@ class _ControlPageState extends State<ControlPage> {
         ],
       );
     } else {
+      setState(() {});
       return Text("Your location ${latLong[0]}, ${latLong[1]}");
     }
   }
@@ -260,7 +261,7 @@ class _ControlPageState extends State<ControlPage> {
                 // TODO get volume and weight from arduino, upload to firebase
                 // await _sendMessage("distance");
                 var L = await _mostRecentArduinoMessages();
-                L.forEach((element) => print(element.text));
+                // L.forEach((element) => print(element.text));
                 print("in here");
               }
             : null;
@@ -300,6 +301,11 @@ class _ControlPageState extends State<ControlPage> {
                 //facility unlocks and verifies it's position
                 await _sendMessage("TUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+                var L = await _mostRecentArduinoMessages();
+                var parsedData = parseDataRecieved(L[0].text);
+                print(parsedData);
+                // L.forEach((element) => print(element.text));
+                print("in here");
               }
             : null;
     var transporterLock = isConnecting
@@ -309,6 +315,11 @@ class _ControlPageState extends State<ControlPage> {
                 //facility unlocks and verifies it's position
                 _sendMessage("TLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+                var L = await _mostRecentArduinoMessages();
+                var parsedData = parseDataRecieved(L[0].text);
+                print(parsedData);
+                // L.forEach((element) => print(element.text));
+                print("in here");
               }
             : null;
 
@@ -380,6 +391,31 @@ class _ControlPageState extends State<ControlPage> {
         ),
       ),
     );
+  }
+
+  parseDataRecieved(String dataRecieved) {
+    String type = dataRecieved.substring(0, dataRecieved.indexOf("#"));
+    String data = dataRecieved.substring(dataRecieved.indexOf("#")+1, dataRecieved.length);
+    if (type == "LOCK") {
+      var temp =  data.split("_");
+      return {
+        "type": "lock",
+        "id": temp[0],
+        "volume": temp[1],
+        "weight": temp[2],
+        "loc_x": temp[3],
+        "loc_y": temp[4],
+        "radius": temp[5],
+      };
+    } else if (type == "UNLOCK") {
+      var temp =  data.split("_");
+      return {
+        "type": "unlock",
+        "id": temp[0],
+        "volume": temp[1],
+        "weight": temp[2],
+      };
+    }
   }
 
   _mostRecentArduinoMessages() async {
