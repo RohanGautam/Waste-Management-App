@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'AfterLockReport.dart';
 import 'OneTimeLocation.dart';
 
 class ControlPage extends StatefulWidget {
@@ -385,7 +386,67 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  static List<String> options = [
+    "Location 1",
+    "Location 2",
+    "Location 3",
+    // "Location 4"
+  ];
+
+  var optionLocations = [
+    // LatLng(12.9915799, 80.2322393),
+    LatLng(12.8915799, 80.2322393),
+    LatLng(12.7915799, 80.2322393),
+    LatLng(12.6915799, 80.2322393),
+  ];
+
+  var _dropdownvalue = options[0];
+  Widget dropDownWidget() {
+    setState(() {
+      for (int i = 0; i < optionLocations.length; i++) {
+        var option = optionLocations[i];
+        markers[MarkerId('${i+1}')] = Marker(
+          markerId: MarkerId('${i+1}'),
+          position: option,
+          infoWindow: InfoWindow(title: "Location ${i + 1}", snippet: 'Location of falility ${i + 1}'),
+        );
+      }
+    });
+    //return the dropdown widget
+    return Transform.scale(
+      scale: 1.5,
+      child: Container(
+        child: DropdownButton<String>(
+          value: _dropdownvalue,
+          items: options.map((String value) {
+            return new DropdownMenuItem<String>(
+              value: value,
+              child: new Text(value),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _dropdownvalue = value;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget reportButton(){
+    var fnToSend = recievedHospitalLock? onReportPressed : null;
+    return customButton("Get Report", func:fnToSend, backColor: Colors.blue);
+  }
+
+  var hospitalLockedParsedData;
+  void onReportPressed(){
+    var temp = hospitalLockedParsedData;
+    Navigator.of(context).push(MaterialPageRoute(builder: (context) { return AfterLockReport(weight: temp['weight'], volume: temp['volume'], destination: _dropdownvalue,src: "Hospital #232", latlng: LatLng(double.parse(temp['loc_x']), double.parse(temp['loc_y']))); })); // change to chat page for testing terminal commands
+  }
+
   bool lock = true;
+  bool recievedHospitalLock = false;
   @override
   Widget build(BuildContext context) {
     int facilityID = 0,
@@ -465,6 +526,10 @@ class _ControlPageState extends State<ControlPage> {
                 var L = await _mostRecentArduinoMessages();
                 var parsedData = parseDataRecieved(L[0].text);
                 print(parsedData);
+                setState(() {
+                 recievedHospitalLock= true; 
+                 hospitalLockedParsedData = parsedData;
+                });
                 // L.forEach((element) => print(element.text));
                 print("in here");
               }
@@ -504,9 +569,11 @@ class _ControlPageState extends State<ControlPage> {
               height: 200.0,
               child: googleMap,
             ),
+            dropDownWidget(),
             Container(height: 20,),
             customButton("${widget.persona} ${lock?"lock":"unlock"}", func:(lock?hospitalLock:hospitalUnlock)),
             customButton("Transporter ${lock?"lock":"unlock"}", func:(lock?transporterLock:transporterUnlock)),
+            reportButton(),
             // toggleLight()
             
             // actionBoard(),
