@@ -10,51 +10,67 @@ import "package:firebase_database/firebase_database.dart";
 
 final databaseReference = FirebaseDatabase.instance.reference();
 
-void hopsitalLockSend() {
+void hospitalLockSend() async {
   print("HOSPITAL LOCKING");
-  databaseReference.child("BINID_66716").set({
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
     'weight': '223.89',//Arduino
     'volume': '25000.00',//Arduino
+    'transporter_id': '123432',//OwnerID from Arduino
     'source_id': '12324',//App auth
     'destination_id': '97820',//Entered in App
     'geo_fence_loc': {'x': '12.98', 'y': '89.01'},//From App
     'geo_fence_radius': '5.00'//Default
   });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+  "BINID_66716" : null
+  });
 }
 
-void hopsitalUnlockSend() {
-  print("HOSPITAL UNOCKING");
-  databaseReference.child("BINID_66716").set({
-    'weight': 'null',
-    'volume': 'null',
-    'source_id': 'null',
-    'destination_id': 'null',
-    'geo_fence_loc': 'null',
-    'geo_fence_radius': 'null'
+void hospitalUnlockSend() {
+  print("HOSPITAL UNLOCKING");
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+    'weight': 'null',//Arduino
+    'volume': 'null',//Arduino
+    'transporter_id': 'null',
+    'source_id': 'null',//Arduino
+    'destination_id': 'null',//Arduino
+    'geo_fence_loc': 'null',//Arduino
+    'geo_fence_radius': 'null'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+    "BINID_66716" : null
   });
 }
 
 void facilityLockSend() {
   print("FACILITY LOCKING");
-  databaseReference.child("BINID_66716").set({
-    'weight': 'null',
-    'volume': 'null',
-    'source_id': 'null',
-    'destination_id': 'null',
-    'geo_fence_loc': 'null',
-    'geo_fence_radius': 'null'
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+    'weight': 'null',//Arduino
+    'volume': 'null',//Arduino
+    'transporter_id': '123432',//Arduino
+    'source_id': 'null',//Arduino
+    'destination_id': 'null',//Arduino
+    'geo_fence_loc': 'null',//Arduino
+    'geo_fence_radius': 'null'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("EMPTY").update({
+    "BINID_66716" : null
   });
 }
 
 void facilityUnlockSend() {
   print("FACILITY UNLOCKING");
-  databaseReference.child("BINID_66716").set({
+  databaseReference.child('BIN_STATUS').child("EMPTY").child("BINID_66716").update({
     'weight': '223.89',//Arduino
     'volume': '25000.00',//Arduino
+    'transporter_id': 'null',
     'source_id': '12324',//Arduino
     'destination_id': '97820',//Arduino
     'geo_fence_loc': {'x': '12.98', 'y': '89.01'},//Arduino
     'geo_fence_radius': '5.00'//Default
+  });
+  databaseReference.child('BIN_STATUS').child("ON_JOB").update({
+    "BINID_66716" : null
   });
 }
 
@@ -126,7 +142,7 @@ class _ControlPageState extends State<ControlPage> {
   void initState() {
     super.initState();
     //set up the bluetooth connection
-    BluetoothConnection.toAddress(widget.bserver.address).then((_connection) {
+    BluetoothConnection.toAddress(widget.server.address).then((_connection) {
       print('Connected to the device');
       connection = _connection;
       setState(() {
@@ -293,7 +309,7 @@ class _ControlPageState extends State<ControlPage> {
                 ),
               onPressed: (){
                 print("CREATING RECORD");
-                hopsitalLockSend();//DEBUG
+                facilityLockSend();//DEBUG
               }
             )
           ],
@@ -318,7 +334,7 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () async {
                 //hospital locks and sets geofence
-                hopsitalLockSend();
+                hospitalLockSend();
                 await _sendMessage(
                     "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${facilityID}");
                 // TODO get volume and weight from arduino, upload to firebase
@@ -332,7 +348,7 @@ class _ControlPageState extends State<ControlPage> {
         ? null
         : isConnected
             ? () async {
-                hopsitalUnlockSend();
+                hospitalUnlockSend();
                 //hospital unlocks and verifies it's position
                 await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //nothing happens here, as bin is empty when it comes back to hospital
