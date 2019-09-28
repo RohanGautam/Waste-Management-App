@@ -9,6 +9,7 @@ import 'OneTimeLocation.dart';
 class ControlPage extends StatefulWidget {
   final BluetoothDevice server;
   final String deviceAddress;
+  final String persona = "hospital";
 
   const ControlPage({this.server, this.deviceAddress});
 
@@ -152,6 +153,41 @@ class _ControlPageState extends State<ControlPage> {
       disabledTextColor: textColor,
     );
     // return Text("hi");
+  }
+
+  Widget customButton(String name,
+      {Color backColor = Colors.green,
+      Color textColor = Colors.white,
+      var func = null}) {
+    return RaisedButton(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(
+          name,
+          style: TextStyle(fontSize: 25),
+        ),
+      ),
+      onPressed: func,
+      shape: RoundedRectangleBorder(
+        borderRadius: new BorderRadius.circular(30.0),
+      ),
+      color: backColor,
+      textColor: textColor,
+      // disabledColor: backColor,
+      // disabledTextColor: textColor,
+    );
+    // return Text("hi");
+  }
+
+  Widget putInWastePrompt() {
+    if (widget.persona == "hospital") {
+      return Text(
+        "Put in the Waste 🤖",
+        style: TextStyle(fontSize: 30),
+      );
+    } else {
+      return Container();
+    }
   }
 
   Widget latLongWidget() {
@@ -349,8 +385,90 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
+  bool lock = true;
   @override
   Widget build(BuildContext context) {
+    int facilityID = 0,
+        transporterID = 0,
+        hospitalID = 0; //TODO: id just identifies phone
+    int nextTransporterId = 5; //TODO: get this from firebase
+    var sampleGeofence = [
+      latLong[0], //x
+      latLong[1], //y
+      30 // radius
+    ]; //TODO: get this from firebase
+
+    var hospitalLock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //hospital locks and sets geofence
+                await _sendMessage(
+                    "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${facilityID}");
+                // TODO get volume and weight from arduino, upload to firebase
+                // await _sendMessage("distance");
+                var L = await _mostRecentArduinoMessages();
+                // L.forEach((element) => print(element.text));
+                print("in here");
+              }
+            : null;
+    var hospitalUnlock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //hospital unlocks and verifies it's position
+                await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
+                //nothing happens here, as bin is empty when it comes back to hospital
+              }
+            : null;
+    var facilityLock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //hospital locks and sets geofence
+                await _sendMessage(
+                    "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${hospitalID}");
+                //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
+                // TODO : should we check for midway stops or just do nothing here?
+              }
+            : null;
+    var facilityUnlock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //facility unlocks and verifies it's position
+                await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
+                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+              }
+            : null;
+    var transporterUnlock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //facility unlocks and verifies it's position
+                await _sendMessage("TUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
+                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+                var L = await _mostRecentArduinoMessages();
+                var parsedData = parseDataRecieved(L[0].text);
+                print(parsedData);
+                // L.forEach((element) => print(element.text));
+                print("in here");
+              }
+            : null;
+    var transporterLock = isConnecting
+        ? null
+        : isConnected
+            ? () async {
+                //facility unlocks and verifies it's position
+                _sendMessage("TLOCK#${0}_${latLong[0]}_${latLong[1]}");
+                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+                var L = await _mostRecentArduinoMessages();
+                var parsedData = parseDataRecieved(L[0].text);
+                print(parsedData);
+                // L.forEach((element) => print(element.text));
+                print("in here");
+              }
+            : null;
     final GoogleMap googleMap = GoogleMap(
       onMapCreated: onMapCreated,
       initialCameraPosition: _kInitialPosition,
@@ -379,16 +497,29 @@ class _ControlPageState extends State<ControlPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             // identityWidget("Facility Manager"),
+            putInWastePrompt(),
             latLongWidget(),
             SizedBox(
               width: 300.0,
               height: 200.0,
               child: googleMap,
             ),
+            Container(height: 20,),
+            customButton("${widget.persona} ${lock?"lock":"unlock"}", func:(lock?hospitalLock:hospitalUnlock)),
+            customButton("Transporter ${lock?"lock":"unlock"}", func:(lock?transporterLock:transporterUnlock)),
             // toggleLight()
-            actionBoard(),
+            
+            // actionBoard(),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.refresh),
+        onPressed: (){
+          setState(() {
+           lock = lock? false: true; 
+          });
+        },
       ),
     );
   }
