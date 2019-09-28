@@ -6,6 +6,58 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'OneTimeLocation.dart';
 
+import "package:firebase_database/firebase_database.dart";
+
+final databaseReference = FirebaseDatabase.instance.reference();
+
+void hopsitalLockSend() {
+  print("HOSPITAL LOCKING");
+  databaseReference.child("BINID_66716").set({
+    'weight': '223.89',//Arduino
+    'volume': '25000.00',//Arduino
+    'source_id': '12324',//App auth
+    'destination_id': '97820',//Entered in App
+    'geo_fence_loc': {'x': '12.98', 'y': '89.01'},//From App
+    'geo_fence_radius': '5.00'//Default
+  });
+}
+
+void hopsitalUnlockSend() {
+  print("HOSPITAL UNOCKING");
+  databaseReference.child("BINID_66716").set({
+    'weight': 'null',
+    'volume': 'null',
+    'source_id': 'null',
+    'destination_id': 'null',
+    'geo_fence_loc': 'null',
+    'geo_fence_radius': 'null'
+  });
+}
+
+void facilityLockSend() {
+  print("FACILITY LOCKING");
+  databaseReference.child("BINID_66716").set({
+    'weight': 'null',
+    'volume': 'null',
+    'source_id': 'null',
+    'destination_id': 'null',
+    'geo_fence_loc': 'null',
+    'geo_fence_radius': 'null'
+  });
+}
+
+void facilityUnlockSend() {
+  print("FACILITY UNLOCKING");
+  databaseReference.child("BINID_66716").set({
+    'weight': '223.89',//Arduino
+    'volume': '25000.00',//Arduino
+    'source_id': '12324',//Arduino
+    'destination_id': '97820',//Arduino
+    'geo_fence_loc': {'x': '12.98', 'y': '89.01'},//Arduino
+    'geo_fence_radius': '5.00'//Default
+  });
+}
+
 class ControlPage extends StatefulWidget {
   final BluetoothDevice server;
   final String deviceAddress;
@@ -232,6 +284,17 @@ class _ControlPageState extends State<ControlPage> {
                 borderRadius: new BorderRadius.circular(10.0),
               ),
               onPressed: onPressAction2,
+            ),
+            RaisedButton(
+                child: Text(
+                  "Send to DB",
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 3,
+                ),
+              onPressed: (){
+                print("CREATING RECORD");
+                hopsitalLockSend();//DEBUG
+              }
             )
           ],
         ),
@@ -255,6 +318,7 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () async {
                 //hospital locks and sets geofence
+                hopsitalLockSend();
                 await _sendMessage(
                     "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${facilityID}");
                 // TODO get volume and weight from arduino, upload to firebase
@@ -268,6 +332,7 @@ class _ControlPageState extends State<ControlPage> {
         ? null
         : isConnected
             ? () async {
+                hopsitalUnlockSend();
                 //hospital unlocks and verifies it's position
                 await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //nothing happens here, as bin is empty when it comes back to hospital
@@ -278,6 +343,7 @@ class _ControlPageState extends State<ControlPage> {
         : isConnected
             ? () async {
                 //hospital locks and sets geofence
+                facilityLockSend();
                 await _sendMessage(
                     "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${hospitalID}");
                 //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
@@ -288,6 +354,7 @@ class _ControlPageState extends State<ControlPage> {
         ? null
         : isConnected
             ? () async {
+      facilityUnlockSend();
                 //facility unlocks and verifies it's position
                 await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
                 //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
@@ -344,7 +411,7 @@ class _ControlPageState extends State<ControlPage> {
       onMapCreated: onMapCreated,
       initialCameraPosition: _kInitialPosition,
       compassEnabled: _compassEnabled,
-      mapToolbarEnabled: _mapToolbarEnabled,
+      //mapToolbarEnabled: _mapToolbarEnabled,
       cameraTargetBounds: _cameraTargetBounds,
       minMaxZoomPreference: _minMaxZoomPreference,
       mapType: _mapType,
@@ -352,7 +419,7 @@ class _ControlPageState extends State<ControlPage> {
       scrollGesturesEnabled: _scrollGesturesEnabled,
       tiltGesturesEnabled: _tiltGesturesEnabled,
       zoomGesturesEnabled: _zoomGesturesEnabled,
-      indoorViewEnabled: _indoorViewEnabled,
+      //indoorViewEnabled: _indoorViewEnabled,
       myLocationEnabled: _myLocationEnabled,
       myLocationButtonEnabled: _myLocationButtonEnabled,
       onCameraMove: _updateCameraPosition,
