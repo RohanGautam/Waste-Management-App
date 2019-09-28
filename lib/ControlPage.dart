@@ -9,9 +9,9 @@ import 'OneTimeLocation.dart';
 class ControlPage extends StatefulWidget {
   final BluetoothDevice server;
   final String deviceAddress;
-  final String persona = "hospital";
+  String persona = "hospital";
 
-  const ControlPage({this.server, this.deviceAddress});
+  ControlPage({this.server, this.deviceAddress, this.persona});
 
   @override
   _ControlPageState createState() => _ControlPageState();
