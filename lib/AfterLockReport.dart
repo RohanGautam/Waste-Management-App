@@ -151,7 +151,7 @@ class _AfterLockReportState extends State<AfterLockReport> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 customButton("Go home", func: goHome),
-                customButton("Export as pdf", backColor: Colors.blue)
+                customButton("Export as pdf", backColor: Colors.blue, func: exportPdf)
               ],
             )
           ],

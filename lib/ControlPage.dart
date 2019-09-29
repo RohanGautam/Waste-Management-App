@@ -7,11 +7,11 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'AfterLockReport.dart';
 import 'OneTimeLocation.dart';
 import "package:firebase_database/firebase_database.dart";
-
+var firebaseCounter=0;
 final databaseReference = FirebaseDatabase.instance.reference();
 void hospitalLockSend({weight='223.89', volume = '25000.00', tId='123432', sId='12321', dID = '97820', gf_x ='12.98', gf_y = '89.01', gf_rad = '5.00'}) async {
   print("HOSPITAL LOCKING");
-  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_667_${firebaseCounter}").update({
     'weight': '$weight',//Arduino
     'volume': '$volume',//Arduino
     'transporter_id': '$tId',//OwnerID from Arduino
@@ -20,14 +20,12 @@ void hospitalLockSend({weight='223.89', volume = '25000.00', tId='123432', sId='
     'geo_fence_loc': {'x': '$gf_x', 'y': '$gf_y'},//From App
     'geo_fence_radius': '$gf_rad'//Default
   });
-  databaseReference.child('BIN_STATUS').child("EMPTY").update({
-  "BINID_66716" : null
-  });
+  firebaseCounter+=1;
 }
 
 void hospitalUnlockSend() {
   print("HOSPITAL UNLOCKING");
-  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_667_${firebaseCounter}").update({
     'weight': 'null',//Arduino
     'volume': 'null',//Arduino
     'transporter_id': 'null',
@@ -36,14 +34,12 @@ void hospitalUnlockSend() {
     'geo_fence_loc': 'null',//Arduino
     'geo_fence_radius': 'null'//Default
   });
-  databaseReference.child('BIN_STATUS').child("EMPTY").update({
-    "BINID_66716" : null
-  });
+  firebaseCounter+=1;
 }
 
 void facilityLockSend({tId='123432'}) {
   print("FACILITY LOCKING");
-  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_66716").update({
+  databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_667_${firebaseCounter}").update({
     'weight': 'null',//Arduino
     'volume': 'null',//Arduino
     'transporter_id': '$tId',//Arduino
@@ -52,14 +48,12 @@ void facilityLockSend({tId='123432'}) {
     'geo_fence_loc': 'null',//Arduino
     'geo_fence_radius': 'null'//Default
   });
-  databaseReference.child('BIN_STATUS').child("EMPTY").update({
-    "BINID_66716" : null
-  });
+  firebaseCounter+=1;
 }
 
 void facilityUnlockSend({weight='223.89', volume = '25000.00', tId='123432', sId='12321', dID = '97820', gf_x ='12.98', gf_y = '89.01', gf_rad = '5.00'}) {
   print("FACILITY UNLOCKING");
-  databaseReference.child('BIN_STATUS').child("EMPTY").child("BINID_66716").update({
+  databaseReference.child('BIN_STATUS').child("EMPTY").child("BINID_667_${firebaseCounter}").update({
     'weight': '$weight',//Arduino
     'volume': '$volume',//Arduino
     'transporter_id': '$tId',//OwnerID from Arduino
@@ -68,9 +62,7 @@ void facilityUnlockSend({weight='223.89', volume = '25000.00', tId='123432', sId
     'geo_fence_loc': {'x': '$gf_x', 'y': '$gf_y'},//From App
     'geo_fence_radius': '$gf_rad'//Default
   });
-  databaseReference.child('BIN_STATUS').child("ON_JOB").update({
-    "BINID_66716" : null
-  });
+  firebaseCounter+=1;
 }
 
 
