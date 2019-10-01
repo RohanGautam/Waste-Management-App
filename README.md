@@ -11,7 +11,7 @@ This repository houses the main app, which can control/simulate the actions of t
 [![Smart bin demo main app](https://i.ibb.co/tq0c9QL/https-i-ytimg-com-vi-PNRIRpe3y1-Y-hqdefault.jpg)](https://youtu.be/PNRIRpe3y1Y "Smart bin demo main app")
 
 Additionaly, it contains 3 other apps, for each of these personas to use.
-> insert 3 apps demo clip
+[![Smart bin demo , 3 apps for 3 personas](https://i.ibb.co/t2J34G7/https-i-ytimg-com-vi-o-Jr-Vj-V9s6l-Y-hqdefault.jpg)](https://youtu.be/oJrVjV9s6lY "Smart bin demo , 3 apps for 3 personas")
 
 You can also generate pdf reports about the bin status.
 
