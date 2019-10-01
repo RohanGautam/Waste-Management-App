@@ -9,6 +9,13 @@ This repository houses the main app, which can control/simulate the actions of t
 * The transporter
 * The facility manager at the waste disposal site
 
+## Features
+* Secure transportation system
+* 2-Party Authentication to Lock/Unlock - Immediate authority transfer
+* Only Lock/Unlock at valid Geo-Fence
+* Upload all transactions to append-only database
+* Measure volume/weight at hospital and facility
+
 ### Main app demo
 [![Smart bin demo main app](https://i.ibb.co/tq0c9QL/https-i-ytimg-com-vi-PNRIRpe3y1-Y-hqdefault.jpg)](https://youtu.be/PNRIRpe3y1Y "Smart bin demo main app")
 
