@@ -1,16 +1,20 @@
-# waste_management
+# Waste management app
 
-A new Flutter project.
+This is the waste management app, and is a part of our solution for Hospital waste management in the Singapore-India hackathon 2019.
 
-## Getting Started
+# What is it, and a demo clip
 
-This project is a starting point for a Flutter application.
+This repository houses the main app, which can control/simulate the actions of the 3 parties involved while handling our "Smart bin" during the waste disposal chain: 
+* The hospital manager/representative
+* The transporter
+* The facility manager at the waste disposal site
+>insert main app demo clip
 
-A few resources to get you started if this is your first Flutter project:
+Additionaly, it contains 3 other apps, for each of these personas to use.
+> insert 3 apps demo clip
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+You can also generate pdf reports about the bin status.
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Bin data is uploaded to firebase for use by our hospital inventory management system.
+
+> ⚠️**WARNING**: The maps api key in this repo has been disabled. Add your own API key in `android\app\src\main\AndroidManifest.xml` for google maps to work.
