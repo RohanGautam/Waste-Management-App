@@ -1,16 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:scoped_model/scoped_model.dart';
 import 'package:waste_management/ControlPage.dart';
 
-// import './DiscoveryPage.dart';
 import './SelectBondedDevicePage.dart';
-import './ChatPage.dart';
-// import './BackgroundCollectingTask.dart';
-// import './BackgroundCollectedPage.dart';
-
-//import './LineChart.dart';
 
 class MainPage extends StatefulWidget {
   @override

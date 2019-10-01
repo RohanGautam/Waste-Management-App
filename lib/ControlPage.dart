@@ -7,8 +7,9 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'AfterLockReport.dart';
 import 'OneTimeLocation.dart';
 import "package:firebase_database/firebase_database.dart";
-var firebaseCounter=0;
+var firebaseCounter=0; // incrementing this after each firebase upload, so the binID is unique every time.
 final databaseReference = FirebaseDatabase.instance.reference();
+//this is a function, with optional parameters which have default values. In this hackathon, this is so that even if we didn't recieve proper data, we could still get some believable output. Bad practice :( but it be like that sometimes
 void hospitalLockSend({weight='223.89', volume = '25000.00', tId='123432', sId='12321', dID = '97820', gf_x ='12.98', gf_y = '89.01', gf_rad = '5.00'}) async {
   print("HOSPITAL LOCKING");
   databaseReference.child('BIN_STATUS').child("ON_JOB").child("BINID_667_${firebaseCounter}").update({
@@ -88,7 +89,7 @@ class _ControlPageState extends State<ControlPage> {
   static var latLong = [-33.852, 151.211];
   //maps
   static final CameraPosition _kInitialPosition = const CameraPosition(
-    target: LatLng(-33.852, 151.211),
+    target: LatLng(-33.852, 151.211), //default location on map render is in australia
     zoom: 11.0,
   );
 
@@ -198,23 +199,6 @@ class _ControlPageState extends State<ControlPage> {
     print("recieved coordinates: ${latLong[0]}, ${latLong[1]}");
   }
 
-  Widget identityWidget(String name,
-      {Color backColor = Colors.green, Color textColor = Colors.white}) {
-    return RaisedButton(
-      child: Text(
-        name,
-        style: TextStyle(fontSize: 12),
-      ),
-      onPressed: null,
-      shape: RoundedRectangleBorder(
-        borderRadius: new BorderRadius.circular(30.0),
-      ),
-      disabledColor: backColor,
-      disabledTextColor: textColor,
-    );
-    // return Text("hi");
-  }
-
   Widget customButton(String name,
       {Color backColor = Colors.green,
       Color textColor = Colors.white,
@@ -233,10 +217,7 @@ class _ControlPageState extends State<ControlPage> {
       ),
       color: backColor,
       textColor: textColor,
-      // disabledColor: backColor,
-      // disabledTextColor: textColor,
     );
-    // return Text("hi");
   }
 
   Widget putInWastePrompt() {
@@ -292,169 +273,14 @@ class _ControlPageState extends State<ControlPage> {
     );
   }
 
-  Widget subActionBoard(
-      String action1, action2, var onPressAction1, onPressAction2,
-      {var optionalDescr = false}) {
-    double width = MediaQuery.of(context).size.width;
-    return Card(
-      child: Container(
-        padding: EdgeInsets.all(5.0),
-        width: width / 2 - 10, // 10px less than device width
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            optionalDescr
-                ? identityWidget("Geofence")
-                : identityWidget("Unlocking", backColor: Colors.teal),
-            RaisedButton(
-              padding: EdgeInsets.all(10),
-              child: Text(
-                action1,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 3,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(10.0),
-              ),
-              onPressed: onPressAction1,
-            ),
-            RaisedButton(
-              padding: EdgeInsets.all(10),
-              child: Text(
-                action2,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 3,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: new BorderRadius.circular(10.0),
-              ),
-              onPressed: onPressAction2,
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget actionBoard() {
-    // currently not in use
-    int facilityID = 0,
-        transporterID = 0,
-        hospitalID = 0; //TODO: id just identifies phone
-    int nextTransporterId = 5; //TODO: get this from firebase
-    var sampleGeofence = [
-      latLong[0], //x
-      latLong[1], //y
-      30 // radius
-    ]; //TODO: get this from firebase
-
-    var hospitalLock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //hospital locks and sets geofence
-                await _sendMessage(
-                    "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${facilityID}");
-                // TODO get volume and weight from arduino, upload to firebase
-                // await _sendMessage("distance");
-                var L = await _mostRecentArduinoMessages();
-                // L.forEach((element) => print(element.text));
-                print("in here");
-              }
-            : null;
-    var hospitalUnlock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //hospital unlocks and verifies it's position
-                await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //nothing happens here, as bin is empty when it comes back to hospital
-              }
-            : null;
-    var facilityLock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //hospital locks and sets geofence
-                await _sendMessage(
-                    "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${hospitalID}");
-                //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
-                // TODO : should we check for midway stops or just do nothing here?
-              }
-            : null;
-    var facilityUnlock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //facility unlocks and verifies it's position
-                await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
-              }
-            : null;
-    var transporterUnlock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //facility unlocks and verifies it's position
-                await _sendMessage("TUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
-                var L = await _mostRecentArduinoMessages();
-                var parsedData = parseDataRecieved(L[0].text);
-                print(parsedData);
-                // L.forEach((element) => print(element.text));
-                print("in here");
-              }
-            : null;
-    var transporterLock = isConnecting
-        ? null
-        : isConnected
-            ? () async {
-                //facility unlocks and verifies it's position
-                _sendMessage("TLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
-                var L = await _mostRecentArduinoMessages();
-                var parsedData = parseDataRecieved(L[0].text);
-                print(parsedData);
-                // L.forEach((element) => print(element.text));
-                print("in here");
-              }
-            : null;
-
-    return Container(
-      child: Column(
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              subActionBoard("Hospital lock", "Transport lock", hospitalLock,
-                  transporterLock,
-                  optionalDescr: true),
-              subActionBoard("Facility unlock", "Transport unlock",
-                  facilityUnlock, transporterUnlock),
-            ],
-          ),
-          Row(
-            children: <Widget>[
-              subActionBoard("Facility lock", "Transport lock", facilityLock,
-                  transporterLock,
-                  optionalDescr: true),
-              subActionBoard("Hospital unlock", "Transport unlock",
-                  hospitalUnlock, transporterUnlock),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
+ 
   static List<String> options = [
     "Location 1",
     "Location 2",
     "Location 3",
-    // "Location 4"
   ];
 
   var optionLocations = [
-    // LatLng(12.9915799, 80.2322393),
     LatLng(12.8915799, 80.2322393),
     LatLng(12.7915799, 80.2322393),
     LatLng(12.6915799, 80.2322393),
@@ -462,6 +288,7 @@ class _ControlPageState extends State<ControlPage> {
 
   var _dropdownvalue = options[0];
   Widget dropDownWidget() {
+    //when the dropdown widget is being built, add the markers of the locations too
     setState(() {
       for (int i = 0; i < optionLocations.length; i++) {
         var option = optionLocations[i];
@@ -472,7 +299,7 @@ class _ControlPageState extends State<ControlPage> {
         );
       }
     });
-    //return the dropdown widget
+    //return the dropdown widget (scaled 1.5x)
     return Transform.scale(
       scale: 1.5,
       child: Container(
@@ -514,26 +341,24 @@ class _ControlPageState extends State<ControlPage> {
   Widget build(BuildContext context) {
     int facilityID = 0,
         transporterID = 0,
-        hospitalID = 0; //TODO: id just identifies phone
+        hospitalID = 0; //TODO: id just identifies phone, setting default to 0. Make this something unique to the device.
     int nextTransporterId = 5; //TODO: get this from firebase
     var sampleGeofence = [
       latLong[0], //x
       latLong[1], //y
       30 // radius
-    ]; //TODO: get this from firebase
+    ]; //TODO: get destination required geofences from firebase
 
+  // in this app, where both hospital, facility, and transporter can be controlled, the transporter has to lock/unlock last, as that's when the data is parsed.
     var hospitalLock = isConnecting
         ? null
         : isConnected
             ? () async {
                 //hospital locks and sets geofence
+                // Flock refers to facility lock, We're treating the hospital and waste disposal place both as as 'facility'
                 await _sendMessage(
                     "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${facilityID}");
-                // TODO get volume and weight from arduino, upload to firebase
-                // await _sendMessage("distance");
                 var L = await _mostRecentArduinoMessages();
-                // L.forEach((element) => print(element.text));
-                print("in here");
               }
             : null;
     var hospitalUnlock = isConnecting
@@ -553,7 +378,7 @@ class _ControlPageState extends State<ControlPage> {
                 await _sendMessage(
                     "FLOCK#${0}_${latLong[0]}_${latLong[1]}_${sampleGeofence[0]}_${sampleGeofence[1]}_${sampleGeofence[2]}_${hospitalID}");
                 //nothing happens here as they will send back an empty bin, unless it's a midway stop in some other facility
-                // TODO : should we check for midway stops or just do nothing here?
+                // TODO: maybe recieve messages here also, if there are midway stops
               }
             : null;
     var facilityUnlock = isConnecting
@@ -562,7 +387,7 @@ class _ControlPageState extends State<ControlPage> {
             ? () async {
                 //facility unlocks and verifies it's position
                 await _sendMessage("FUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
+                //weight, vol from arduino gotten in transporter unlock. 
               }
             : null;
     var transporterUnlock = isConnecting
@@ -571,12 +396,11 @@ class _ControlPageState extends State<ControlPage> {
             ? () async {
                 //facility unlocks and verifies it's position
                 await _sendMessage("TUNLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
                 var L = await _mostRecentArduinoMessages();
                 var parsedData = parseDataRecieved(L[0].text);
                 print(parsedData);
                 setState(() {
-                 recievedHospitalLock= true; 
+                 recievedHospitalLock= true;  // to activate the get report button
                  hospitalLockedParsedData = parsedData;
                 });
                 if(widget.persona == 'hospital'){
@@ -586,10 +410,7 @@ class _ControlPageState extends State<ControlPage> {
                 else{
                   facilityUnlockSend();
                   print("SENT TO FIREBASE");
-                }
-                
-                // L.forEach((element) => print(element.text));
-                print("in here");
+                }                
               }
             : null;
     var transporterLock = isConnecting
@@ -598,7 +419,6 @@ class _ControlPageState extends State<ControlPage> {
             ? () async {
                 //facility unlocks and verifies it's position
                 _sendMessage("TLOCK#${0}_${latLong[0]}_${latLong[1]}");
-                //TODO : get weight, vol from arduino. get previous weight, vol from firebase. compare the two and allow some error margin
                 var L = await _mostRecentArduinoMessages();
                 var parsedData = parseDataRecieved(L[0].text);
                 print(parsedData);
@@ -615,8 +435,6 @@ class _ControlPageState extends State<ControlPage> {
                   facilityLockSend();
                   print("SENT TO FIREBASE");
                 }
-                // L.forEach((element) => print(element.text));
-                print("in here");
               }
             : null;
     final GoogleMap googleMap = GoogleMap(
@@ -715,8 +533,9 @@ class _ControlPageState extends State<ControlPage> {
       return newArduinoMessages;
     };
     var L;
+    // look for recieved messages after a particular duration
     await Future.delayed(const Duration(milliseconds: 4000), () {
-      //TODO: tweak the delay if input takes too much time
+      //TODO: tweak the delay above if input is large (or if you dont get anything from this function)
       L = _recentMessages();
     });
     return (L);
