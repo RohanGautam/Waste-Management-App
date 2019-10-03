@@ -1,6 +1,6 @@
-# Waste management app
+# Waste management app, Singapore India Hackathon 2019
 
-This is the waste management app, and is a part of our solution for Hospital waste management in the Singapore-India hackathon 2019.
+This is a waste management app for hospitals, and is a part of our solution for Hospital waste management in the Singapore-India hackathon 2019.
 
 # What is it, and a demo clip
 
@@ -28,3 +28,7 @@ You can also generate pdf reports about the bin status.
 Bin data is uploaded to firebase for use by our hospital inventory management system.
 
 > ⚠️**WARNING**: The maps api key in this repo has been disabled. Add your own API key in `android\app\src\main\AndroidManifest.xml` for google maps to work.
+
+# Other parts of this project
+* Repository for website is [here.](https://github.com/txtr/nautic)
+* Repository for Hardware and computer vision is [here.](https://github.com/laksh22/SIH-Team19)
